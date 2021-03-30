@@ -1,0 +1,6 @@
+graft dtcvote
+# include dtcvote/schema.sql
+# graft dtcvote/static
+# graft dtcvote/templates
+global-exclude *.pyc
+global-exclude __pycache__

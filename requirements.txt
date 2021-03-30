@@ -1,0 +1,10 @@
+# Flask==1.1.2
+flask-admin==1.5.7
+SQLAlchemy == 1.4.2
+swagger-ui-bundle >= 0.0.8
+connexion[swagger-ui] == 2.7.0
+python_dateutil >= 2.6.0
+setuptools >= 21.0.0
+psycopg2==2.8.6
+# electionguard==1.1.16
+/usr/src/electionguard-python/dist/electionguard-1.1.16-py3-none-any.whl

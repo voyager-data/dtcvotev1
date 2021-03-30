@@ -1,0 +1,772 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: DTC-Vote
+  description: 'API for DTC-Vote, the secure and easy election software.'
+  termsOfService: 'http://swagger.io/terms/'
+  contact:
+    name: Adam Gutcheon
+    email: adam@windsordemocrats.com
+    url: 'https://www.windsordemocrats.com'
+  license:
+    name: GPLv3
+    url: 'http://www.gnu.org/licenses/gpl-3.0.html'
+servers:
+  - url: /api/v1
+tags:
+  - name: algorithms
+    description: How to decide
+  - name: elections
+    description: Pets operations
+  - name: questions
+    description: An election should have one or more questions to vote on
+  - name: candidates
+    description: Choices
+  - name: voters
+    description: It's their fault
+  - name: ballots
+    description: Our proprietary ChainBlock (tm) technology locks in your vote
+  - name: counting
+    description: Filthy tabulator
+paths:
+  /election:
+    get:
+      description: Returns all elections from the system that the user has access to
+      tags:
+        - elections
+      responses:
+        '200':
+          description: election response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ElectionSearchResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      description: Creates a new election
+      tags:
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        description: Elections to add to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ElectionRequest'
+      responses:
+        '201':
+          description: pet responses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ElectionResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/election/{ID}':
+    get:
+      description: Returns an election based on a single ID
+      tags:
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElectionResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    put:
+      description: >-
+        Replace an election record. Returns an error if voting has been opened
+        or closed.
+      tags:
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/FetchByID'
+      requestBody:
+        description: Updated election record
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ElectionRequest'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElectionResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      description: deletes a single election based on the ID supplied
+      tags:
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: voter deleted
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/election/{ID}/voters':
+    get:
+      description: List the voters for the given Election ID
+      tags:
+        - elections
+        - voters
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoterResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      description: Add voters to an election.
+      tags:
+        - elections
+        - voters
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/FetchByID'
+      requestBody:
+        description: List of voter ids
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                format: int64
+      responses:
+        '201':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      description: clears all voters from an election based on the ID supplied
+      tags:
+        - elections
+        - voters
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: voters truncated
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/election/{ID}/generate_ballots':
+    get:
+      description: Creates ballot blanks unique to each voter in a given election.
+      tags:
+        - ballots
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/election/{ID}/open':
+    get:
+      description: Opens an election based on a single ID
+      tags:
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/election/{ID}/close':
+    get:
+      description: Closes an election based on a single ID
+      tags:
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/election/{ID}/count':
+    get:
+      description: Counts the ballots for a given election ID
+      tags:
+        - elections
+        - counting
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+        - name: recount
+          in: query
+          description: Force a recount even when stored results are available
+          required: false
+          style: form
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: count response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CountResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /voter:
+    get:
+      description: |
+        Returns all voters from the system that the user has access to
+      tags:
+        - voters
+      responses:
+        '200':
+          description: voter responses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoterResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      description: Creates new voters
+      tags:
+        - voters
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        description: Voters to add to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/VoterRequest'
+      responses:
+        '201':
+          description: voter responses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoterResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/voter/{ID}':
+    get:
+      description: Returns a voter based on a single ID
+      tags:
+        - voters
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoterResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      description: deletes a single voter based on the ID supplied
+      tags:
+        - voters
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: voter deleted
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/voter/{ID}/elections':
+    get:
+      description: Returns all elections for voter ID
+      tags:
+        - voters
+        - elections
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: Elections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ElectionResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/question/{ID}':
+    get:
+      description: Returns a question based on a single ID
+      tags:
+        - questions
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/question/{ID}/blt':
+    get:
+      description: Tabulates ballots for a question by ID to blt format
+      tags:
+        - questions
+        - counting
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: BLT file
+          content:
+            text/plain:
+              schema:
+                type: string
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/candidate/{ID}':
+    delete:
+      description: deletes a single candidate based on the ID supplied
+      tags:
+        - candidates
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '204':
+          description: candidate deleted
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /algorithm:
+    get:
+      description: Returns all algorithms from the system that the user has access to
+      tags:
+        - algorithms
+      responses:
+        '200':
+          description: algorithm response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AlgorithmResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/algorithm/{ID}':
+    get:
+      description: Returns an algorithm based on a single ID
+      tags:
+        - algorithms
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlgorithmResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  '/ballot/{ID}/{uuid}':
+    get:
+      description: Returns a ballot based on a ballot ID and voter UUID
+      tags:
+        - ballots
+      parameters:
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/FetchByUUID'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BallotResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    put:
+      description: Cast a ballot.
+      tags:
+        - ballots
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/FetchByID'
+        - $ref: '#/components/parameters/FetchByUUID'
+      requestBody:
+        description: Completed ballot
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BallotPutRequest'
+      responses:
+        '200':
+          description: Ballot cast
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BallotResponse'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+components:
+  schemas:
+    ElectionBase:
+      type: object
+      required:
+        - name
+        - secret_ballot
+      properties:
+        name:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+        vote_email:
+          type: string
+        voted_email:
+          type: string
+        not_voted_email:
+          type: string
+        opened:
+          type: string
+          format: date-time
+        closed:
+          type: string
+          format: date-time
+        secret_ballot:
+          type: boolean
+      example:
+        name: Who Gets the Apple of Discord?
+        vote_email: you must vote
+        voted_email: you voted
+        not_voted_email: you have not voted
+        secret_ballot: false
+    ElectionRequest:
+      allOf:
+        - type: object
+          properties:
+            questions:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestionRequest'
+        - $ref: '#/components/schemas/ElectionBase'
+    ElectionSearchResponse:
+      type: object
+      required:
+        - name
+        - secret_ballot
+      properties:
+        ID:
+          type: integer
+          format: int64
+        created_dt:
+          type: string
+          format: date-time
+        name:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+        opened:
+          type: string
+          format: date-time
+        closed:
+          type: string
+          format: date-time
+        secret_ballot:
+          type: boolean
+    ElectionResponse:
+      allOf:
+        - type: object
+          properties:
+            ID:
+              type: integer
+              format: int64
+            created_dt:
+              type: string
+              format: date-time
+            questions:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestionResponse'
+            results:
+              $ref: '#/components/schemas/CountResponse'
+        - $ref: '#/components/schemas/ElectionBase'
+    VoterBase:
+      type: object
+      required:
+        - email
+        - name
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+    VoterRequest:
+      $ref: '#/components/schemas/VoterBase'
+    VoterResponse:
+      allOf:
+        - type: object
+          properties:
+            ID:
+              type: integer
+              format: int64
+            created_dt:
+              type: string
+              format: date-time
+            uuid:
+              type: string
+              format: uuid
+        - $ref: '#/components/schemas/VoterBase'
+    QuestionBase:
+      type: object
+      required:
+        - name
+        - sequence
+        - algorithm_id
+        - randomize_candidates
+        - number_of_winners
+      properties:
+        name:
+          type: string
+        sequence:
+          type: integer
+        algorithm_id:
+          type: integer
+        randomize_candidates:
+          type: boolean
+        number_of_winners:
+          type: integer
+    QuestionRequest:
+      allOf:
+        - type: object
+          properties:
+            candidates:
+              type: array
+              items:
+                $ref: '#/components/schemas/CandidateRequest'
+        - $ref: '#/components/schemas/QuestionBase'
+    QuestionResponse:
+      allOf:
+        - type: object
+          properties:
+            ID:
+              type: integer
+              format: int64
+            created_dt:
+              type: string
+              format: date-time
+            candidates:
+              type: array
+              items:
+                $ref: '#/components/schemas/CandidateResponse'
+        - $ref: '#/components/schemas/QuestionBase'
+    CandidateBase:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        sequence:
+          type: integer
+    CandidateRequest:
+      $ref: '#/components/schemas/CandidateBase'
+    CandidateResponse:
+      allOf:
+        - type: object
+          properties:
+            ID:
+              type: integer
+              format: int64
+            created_dt:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/CandidateBase'
+    AlgorithmBase:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      example:
+        name: Plurality
+        description: Traditional first-past-the-post voting. Each voter gets one vote and the candidate with the most votes wins.
+    AlgorithmResponse:
+      allOf:
+        - type: object
+          properties:
+            ID:
+              type: integer
+              format: int64
+            created_dt:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/AlgorithmBase'
+    BallotPutRequest:
+      type: object
+      properties:
+        votes:
+          type: array
+          items:
+            type: object
+            properties:
+              question_id:
+                type: integer
+                format: int64
+              sequence:
+                type: integer
+              rank:
+                type: integer
+    BallotResponse:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: int64
+        created_dt:
+          type: string
+          format: date-time
+        uuid:
+          type: string
+          format: uuid
+        voted_on:
+          type: array
+          items:
+            type: string
+            format: date-time
+        signature:
+          type: string
+    CountResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          question_id:
+            type: integer
+            format: int64
+          round:
+            type: integer
+          sequence:
+            type: integer
+          votes:
+            type: integer
+          votes_redistributed:
+            type: integer
+          status:
+            type: string
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  parameters:
+    FetchByID:
+      name: ID
+      in: path
+      description: ID of pet to fetch
+      required: true
+      schema:
+        type: integer
+        format: int64
+    FetchByUUID:
+      name: uuid
+      in: path
+      description: UUID of pet to fetch
+      required: true
+      schema:
+        type: string
+        format: uuid
+    DryRun:
+      name: dry_run
+      in: query
+      description: Validate but don't actually do it
+      required: false
+      style: form
+      schema:
+        type: boolean
+  responses:
+    UnexpectedError:
+      description: unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
