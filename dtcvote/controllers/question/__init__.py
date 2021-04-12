@@ -1,5 +1,4 @@
 from dtcvote.models.orm import Question
-from dtcvote.controllers import _search, _post, _get, _delete
+from dtcvote.controllers import _get
 
 get = _get(Question)
-

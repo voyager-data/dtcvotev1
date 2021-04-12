@@ -19,3 +19,5 @@ services:
     environment:
       - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://postgres:postgres@db/postgres
       - DTC_ENVIRONMENT=dev
+      - PYTHONIOENCODING=utf-8
+      - LANG=en_US.UTF-8

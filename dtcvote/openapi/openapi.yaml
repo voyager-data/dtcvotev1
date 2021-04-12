@@ -71,7 +71,7 @@ paths:
                   $ref: '#/components/schemas/ElectionResponse'
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/election/{ID}':
+  '/election/{id_}':
     get:
       description: Returns an election based on a single ID
       tags:
@@ -88,9 +88,7 @@ paths:
         default:
           $ref: '#/components/responses/UnexpectedError'
     put:
-      description: >-
-        Replace an election record. Returns an error if voting has been opened
-        or closed.
+      description: Replace an election record. Returns an error if voting has been opened or closed.
       tags:
         - elections
       parameters:
@@ -124,7 +122,7 @@ paths:
           description: voter deleted
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/election/{ID}/voters':
+  '/election/{id_}/voters':
     get:
       description: List the voters for the given Election ID
       tags:
@@ -183,7 +181,7 @@ paths:
           description: voters truncated
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/election/{ID}/generate_ballots':
+  '/election/{id_}/generate_ballots':
     get:
       description: Creates ballot blanks unique to each voter in a given election.
       tags:
@@ -201,24 +199,7 @@ paths:
                 type: string
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/election/{ID}/open':
-    get:
-      description: Opens an election based on a single ID
-      tags:
-        - elections
-      parameters:
-        - $ref: '#/components/parameters/FetchByID'
-        - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: Success
-          content:
-            text/plain:
-              schema:
-                type: string
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-  '/election/{ID}/close':
+  '/election/{id_}/close':
     get:
       description: Closes an election based on a single ID
       tags:
@@ -235,7 +216,7 @@ paths:
                 type: string
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/election/{ID}/count':
+  '/election/{id_}/count':
     get:
       description: Counts the ballots for a given election ID
       tags:
@@ -305,7 +286,7 @@ paths:
                   $ref: '#/components/schemas/VoterResponse'
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/voter/{ID}':
+  '/voter/{id_}':
     get:
       description: Returns a voter based on a single ID
       tags:
@@ -333,7 +314,7 @@ paths:
           description: voter deleted
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/voter/{ID}/elections':
+  '/voter/{id_}/elections':
     get:
       description: Returns all elections for voter ID
       tags:
@@ -352,7 +333,7 @@ paths:
                   $ref: '#/components/schemas/ElectionResponse'
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/question/{ID}':
+  '/question/{id_}':
     get:
       description: Returns a question based on a single ID
       tags:
@@ -368,7 +349,7 @@ paths:
                 $ref: '#/components/schemas/QuestionResponse'
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/question/{ID}/blt':
+  '/question/{id_}/blt':
     get:
       description: Tabulates ballots for a question by ID to blt format
       tags:
@@ -385,7 +366,7 @@ paths:
                 type: string
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/candidate/{ID}':
+  '/candidate/{id_}':
     delete:
       description: deletes a single candidate based on the ID supplied
       tags:
@@ -414,29 +395,12 @@ paths:
                   $ref: '#/components/schemas/AlgorithmResponse'
         default:
           $ref: '#/components/responses/UnexpectedError'
-  '/algorithm/{ID}':
+  '/ballot/{uuid}':
     get:
-      description: Returns an algorithm based on a single ID
-      tags:
-        - algorithms
-      parameters:
-        - $ref: '#/components/parameters/FetchByID'
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AlgorithmResponse'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
-  '/ballot/{ID}/{uuid}':
-    get:
-      description: Returns a ballot based on a ballot ID and voter UUID
+      description: Returns a ballot based on a ballot UUID
       tags:
         - ballots
       parameters:
-        - $ref: '#/components/parameters/FetchByID'
         - $ref: '#/components/parameters/FetchByUUID'
       responses:
         '200':
@@ -453,7 +417,6 @@ paths:
         - ballots
       parameters:
         - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/FetchByID'
         - $ref: '#/components/parameters/FetchByUUID'
       requestBody:
         description: Completed ballot
@@ -484,6 +447,8 @@ components:
         deadline:
           type: string
           format: date-time
+        timezone:
+          type: string
         vote_email:
           type: string
         voted_email:
@@ -500,6 +465,7 @@ components:
           type: boolean
       example:
         name: Who Gets the Apple of Discord?
+        timezone: America/New York
         vote_email: you must vote
         voted_email: you voted
         not_voted_email: you have not voted
@@ -651,14 +617,18 @@ components:
       required:
         - name
         - description
+        - instructions
       properties:
         name:
           type: string
         description:
           type: string
+        instructions:
+          type: string
       example:
-        name: Plurality
-        description: Traditional first-past-the-post voting. Each voter gets one vote and the candidate with the most votes wins.
+        name: rcv
+        description: Instant Runoff Ranked Choice Voting
+        instructions: Rank the candidates according to your preference, with 1 being your most preferred.
     AlgorithmResponse:
       allOf:
         - type: object
@@ -671,32 +641,32 @@ components:
               format: date-time
         - $ref: '#/components/schemas/AlgorithmBase'
     BallotPutRequest:
-      type: object
-      properties:
-        votes:
-          type: array
-          items:
-            type: object
-            properties:
-              question_id:
-                type: integer
-                format: int64
-              sequence:
-                type: integer
-              rank:
-                type: integer
+      type: array
+      items:
+        type: object
+        required:
+          - question_seq
+          - candidate_seq
+          - rank
+        properties:
+          question_seq:
+            type: integer
+            format: int64
+          candidate_seq:
+            type: integer
+          rank:
+            type: integer
     BallotResponse:
       type: object
       properties:
-        ID:
-          type: integer
-          format: int64
         created_dt:
           type: string
           format: date-time
         uuid:
           type: string
           format: uuid
+        secret_phrase:
+          type: string
         voted_on:
           type: array
           items:
@@ -735,7 +705,7 @@ components:
           type: string
   parameters:
     FetchByID:
-      name: ID
+      name: id_
       in: path
       description: ID of pet to fetch
       required: true

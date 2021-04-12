@@ -1,18 +1,20 @@
-from typing import NoReturn, Sequence, ClassVar
 from contextlib import contextmanager
-from flask import current_app
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Result
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.expression import Executable
 from threading import get_ident
-from sqlalchemy.orm import scoped_session
-from dtcvote.config import SQLALCHEMY_DATABASE_URI
-from psycopg2 import Error as DbError
+from typing import ClassVar, NoReturn, Sequence
 
+from flask import current_app
+from psycopg2 import Error as DbError
+from sqlalchemy import create_engine, select
+from sqlalchemy.engine import Result
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.sql.expression import Executable
+
+from dtcvote.config import SQLALCHEMY_DATABASE_URI
 
 db_engine = create_engine(SQLALCHEMY_DATABASE_URI, echo=True, future=True)
-LocalSession = sessionmaker(bind=db_engine, autoflush=False, future=True)
+LocalSession = sessionmaker(
+    bind=db_engine, autoflush=False, autocommit=False, future=True
+)
 
 
 def db_connect() -> scoped_session:
@@ -42,8 +44,20 @@ def db_get_by_id(cls, ID):
     return current_app.db_session().get(cls, ID)
 
 
+def db_get_by_uuid(cls, uuid):
+    return (
+        current_app.db_session()
+        .execute(select(cls).where(getattr(cls, "uuid") == uuid))
+        .scalar()
+    )
+
+
 def db_del(obj):
     return current_app.db_session.delete(obj)
+
+
+def db_flush():
+    return current_app.db_session.flush()
 
 
 def commit_or_rollback(rollback: bool) -> NoReturn:

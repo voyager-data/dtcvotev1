@@ -36,7 +36,7 @@ sudo apt-get install -y --no-install-recommends \
 		libpq-dev libgmp-dev libmpfr-dev libmpc-dev libmpdec-dev \
 						intel-mkl uuid-dev libbz2-dev libncurses-dev libssl-dev \
 						liblzma-dev libsqlite3-dev libreadline-dev   \
-						zlib1g-dev libdb-dev libffi-dev
+						zlib1g-dev libdb-dev libffi-dev wamerican
 						
 #python3 -m venv ~/.venv/dtcvotes
 echo 'alias envdtc="source ~/.venv/dtcvotes/bin/activate"' >> ~/.bash_aliases

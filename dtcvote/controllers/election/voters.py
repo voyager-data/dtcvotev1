@@ -1,47 +1,42 @@
-from dtcvote.database import db_insert, commit_or_rollback
-from dtcvote.models.orm import ElectionVoter, Election
+from typing import Iterable, List, Tuple, Union
 
 import connexion
-from typing import Iterable, Tuple, Union, List
-
-from sqlalchemy import Column, Integer, Unicode, Boolean, TIMESTAMP, Identity, ForeignKey, UniqueConstraint, \
-    select, update, inspect, delete as sql_delete
+from dtcvote.database import (commit_or_rollback, db_exec, db_get_by_id,
+                              db_insert)
+from dtcvote.models.orm import Election, ElectionVoter
+from sqlalchemy import delete as sql_delete
 from sqlalchemy.exc import IntegrityError
-from dtcvote.database import db_exec, db_insert, db_del, db_get_by_id, commit_or_rollback
 
 
-def search(id_):  # noqa: E501
+def search(id_: int):  # noqa: E501
     """election_id_voters_get
 
     List all voters for the election ID.
 
-    :param ID: ID of pet to fetch
-    :type ID: int
+    :param id_: ID of pet to fetch
     """
     e = db_get_by_id(Election, id_)
     if not e:
-        return f"Election ID Not Found", 404
+        return {'code': 404, 'message': "Election ID Not Found"}, 404
     else:
-        return e.voters_for_election(only_new=False), 200
+
+        return e.voters_for_election(only_new=False, as_dict=True), 200
 
 
-def delete(id_, dry_run=False):  # noqa: E501
+def delete(id_: int, dry_run=False):
     """election_id_voters_delete
 
     clears all voters from an election based on the ID supplied # noqa: E501
 
-    :param ID: ID of pet to fetch
-    :type ID: int
+    :param id_: ID of pet to fetch
     :param dry_run: Validate but don&#39;t actually do it
-    :type dry_run: bool
 
-    :rtype: None
     """
     e = db_get_by_id(Election, id_)
     if not e:
-        return f"Election ID Not Found", 404
+        return {'code': 404, 'message': "Election ID Not Found"}, 404
     elif e.opened:
-        return "This election has been opened. It is too late to remove voters.", 418
+        return {'code': 418, 'message': "This election has been opened. It is too late to remove voters."}, 418
     else:
         stmt = sql_delete(ElectionVoter).where(ElectionVoter.election_id==id_)
         db_exec(stmt)
@@ -49,15 +44,13 @@ def delete(id_, dry_run=False):  # noqa: E501
         return None
 
 
-def post(id_, dry_run=False):  # noqa: E501
+def post(id_: int, dry_run=False):  # noqa: E501
     """election_id_voters_post
 
     Add voters to an election. # noqa: E501
 
-    :param ID: ID of pet to fetch
-    :type ID: int
+    :param id_: ID of pet to fetch
     :param dry_run: Validate but don&#39;t actually do it
-    :type dry_run: bool
     """
     request = connexion.request.get_json()
     try:

@@ -99,7 +99,7 @@ def main():
                 resolver=RestyResolver('dtcvote.controllers'),
                 )
 
-    make_admin_if(app.app, __name__)
+    make_admin_if(app.app, 'DTC-Vote')
 
     app.run(port=80)
 

@@ -1,15 +1,19 @@
+from dtcvote.database import db_get_by_id, commit_or_rollback
+from dtcvote.models.orm import Election
+from datetime import datetime
+from dateutil.tz import gettz
 
-
-def search(ID, dry_run=False):  # noqa: E501
+def search(id_: int, dry_run: bool=False):
     """election_id_close_get
 
-    Closes an election based on a single ID # noqa: E501
+    Closes an election based on a single ID # noqa: E5 None1
 
-    :param ID: ID of pet to fetch
-    :type ID: int
+    :param ID: Election ID
     :param dry_run: Validate but don&#39;t actually do it
-    :type dry_run: bool
 
     :rtype: str
     """
-    return 'do some magic!'
+    e = db_get_by_id(Election, id_)
+    e.closed = datetime.now(tz=gettz('America/New York'))
+    commit_or_rollback(dry_run)
+    return "Election closed. Ballots will no longer be accepted."
